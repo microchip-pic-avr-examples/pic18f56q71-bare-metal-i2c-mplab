@@ -15,11 +15,11 @@ static volatile uint8_t memBlock[4];
 
 void advancedIO_init(void)
 {   
-    //Init I2C Module in Host Mode
-    I2C_initHost();
-    
     //Init I/O
     I2C_initPins();
+    
+    //Init I2C Module in Host Mode
+    I2C_initHost();
 }
 
 void advancedIO_setRegister(ADVANCED_IO_REGISTER reg, uint8_t value)

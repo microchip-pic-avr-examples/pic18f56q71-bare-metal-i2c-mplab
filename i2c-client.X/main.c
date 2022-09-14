@@ -1,10 +1,11 @@
+
 // PIC18F56Q71 Configuration Bit Settings
 
 // 'C' source line config statements
 
 // CONFIG1
 #pragma config FEXTOSC = OFF    // External Oscillator Selection (Oscillator not enabled)
-#pragma config RSTOSC = HFINTOSC_1MHZ// Reset Oscillator Selection (HFINTOSC with HFFRQ = 4 MHz and CDIV = 4:1)
+#pragma config RSTOSC = HFINTOSC_64MHZ// Reset Oscillator Selection (HFINTOSC with HFFRQ = 64 MHz and CDIV = 1:1)
 
 // CONFIG2
 #pragma config CLKOUTEN = OFF   // Clock out Enable bit (CLKOUT function is disabled)
@@ -17,7 +18,7 @@
 
 // CONFIG3
 #pragma config MCLRE = EXTMCLR  // MCLR Enable bit (If LVP = 0, MCLR pin is MCLR; If LVP = 1, RE3 pin function is MCLR )
-#pragma config PWRTS = PWRT_64  // Power-up timer selection bits (PWRT set at 64ms)
+#pragma config PWRTS = PWRT_16  // Power-up timer selection bits (PWRT set at 16ms)
 #pragma config MVECEN = ON      // Multi-vector enable bit (Multi-vector enabled, Vector table used for interrupts)
 #pragma config IVT1WAY = ON     // IVTLOCK bit One-way set enable bit (IVTLOCKED bit can be cleared and set only once)
 #pragma config LPBOREN = OFF    // Low Power BOR Enable bit (Low-Power BOR disabled)
@@ -64,54 +65,68 @@
 
 #include <xc.h>
 
-#include "advanced_IO.h"
-#include "i2c_host.h"
+#include "i2c_client.h"
 
-#include <stdint.h>
-#include <stdbool.h>
+#define BUFFER_SIZE 16
+
+static volatile uint8_t buffer[BUFFER_SIZE];
+
+//Example WRITE function (Host -> Client)
+void myI2CWriteFunction(uint8_t data)
+{
+    LATC7 = !LATC7;
+    buffer[0] = data;
+}
+
+//Example READ function (Client -> Host)
+uint8_t myI2CReadFunction(void)
+{
+    return buffer[0];
+}
+
+//Example STOP function
+void myI2CStopFunction(void)
+{
+    
+}
 
 void main(void) {
     
-    //Init the IO Expander
-    advancedIO_init();
+    //Init I/O
+    I2C_initPins();
     
-    //LED0 on Nano
+    //Init I2C Client
+    I2C_initClient(0x64);
+    
+    //Reset I2C on Bus TimeOut (BTO), 1ms Bus Timeout
+    //See Note 2 for I2CxBTO Register in the Datasheet for Details
+    I2C_initBTO(true, true, 0, I2C_BTO_LFINTOSC);
+    
+    //Enable LED0 as an output
     TRISC7 = 0;
+    
+    //Turn off LED0 (active LOW)
     LATC7 = 1;
     
-    //Active High RESET on I/O Expander
-    TRISF5 = 0;
-    LATF5 = 0;
+    //Assign Interrupt Handlers
+    I2C_assignByteWriteHandler(&myI2CWriteFunction);
+    I2C_assignByteReadHandler(&myI2CReadFunction);
+    I2C_assignStopHandler(&myI2CStopFunction);
     
-    bool good = false;
+    IVTBASE = 0x1000;
+    IVTLOCKbits.IVTLOCKED = 1;
     
-    while (!good)
-    {
-        //Try to send a byte to see if the I/O expander is communicating
-        //In some cases, weak pull-ups can cause issues on comm. startup
-        good = I2C_sendByte(ADVANCED_IO_I2C_ADDR, 0x00);
-        
-        if (!good)
-        {
-            //Toggles the reset line
-            LATF5 = 1;
-            for (uint32_t i = 0; i < 0xFFFF; i++);
-            LATF5 = 0;
-            for (uint32_t i = 0; i < 0xFFFF; i++);
-        }
-    }
-    
-    //Set the I/O Expander Pins as Outputs
-    advancedIO_setPinsAsOutputs(0xFF);
-        
-    //Set initial pattern
-    advancedIO_setRegister(ADV_IO_LATx, 0xAA);
+    //Enable Interrupts
+    INTCON0bits.GIE = 1;
+    INTCON0bits.GIEL = 1;
+    INTCON0bits.GIEH = 1;
     
     while (1)
     {
-        advancedIO_getRegister(ADV_IO_IOCxN);
-        advancedIO_toggleBitsInRegister(ADV_IO_LATx, 0xFF);
-        for (uint32_t i = 0; i < 0xFFF; i++) { ; }
+        //LATC7 = !LATC7;
+        
+        //Simple delay
+        for (uint32_t i = 0; i < 0xFFFFF; i++) { ; }
     }
     
     return;

@@ -48,7 +48,7 @@ extern "C" {
 #define ADV_IO_OP_SAVE_LOAD     0b11
 
 //I2C Address to Use
-#define ADVANCED_IO_I2C_ADDR 0x64
+#define ADVANCED_IO_I2C_ADDR 0x60
         
     /**
      * <b><FONT COLOR=BLUE>void</FONT> advancedIO_init(<FONT COLOR=BLUE>void</FONT>)</B>

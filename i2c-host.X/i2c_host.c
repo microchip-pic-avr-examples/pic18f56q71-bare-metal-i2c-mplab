@@ -34,16 +34,21 @@ void I2C_initHost(void)
     //Select HFINTOSC as a clock source
     I2C1CLK = 0b00010;
     
-    //100kHz Clock from a 4 MHz oscillator
+    //~100kHz Clock from a 4 MHz oscillator
     I2C1BAUD = 8;
     
-    //---------------------------------------
-    //TODO: Implement Bus Timeout!
+    //BTO is configured separately
     I2C1BTO = 0x00;
-    //---------------------------------------
     
     //Enable I2C Module
     I2C1CON0bits.EN = 1;
+}
+
+//Initialize the bus timeout feature
+void I2C_initBTO(bool reset, bool prescale, uint8_t timeout, I2C_BTO_Clock clock)
+{
+    I2C1BTO = (reset << 7) | (prescale << 6) | (0x3F & timeout);
+    I2C1BTOC = clock;
 }
 
 //Initializes the I/O pins for I2C
@@ -72,20 +77,20 @@ void I2C_initPins(void)
     RC3PPS = 0x20;
     RC4PPS = 0x21;
     
-    //Enable Internal Pullup resistors
-#ifdef USE_INTERNAL_PULLUPS
-    
     //Standard Slew Rate
     RC3I2Cbits.SLEW = 0b00;
     RC4I2Cbits.SLEW = 0b00;
     
-    //10x Normal Pullup Strength
-    RC3I2Cbits.PU = 0b10;
-    RC4I2Cbits.PU = 0b10;
-    
     //I2C Thresholds
     RC3I2Cbits.TH = 0b01;
     RC4I2Cbits.TH = 0b01;
+    
+    //Enable Internal Pullup resistors
+#ifdef USE_INTERNAL_PULLUPS
+    
+    //10x Normal Pullup Strength
+    RC3I2Cbits.PU = 0b10;
+    RC4I2Cbits.PU = 0b10;
 #endif
 }
 
@@ -93,26 +98,7 @@ void I2C_initPins(void)
 //Returns true if successful, or false if an error occurred
 bool I2C_sendByte(uint8_t addr, uint8_t data)
 {
-    //Load Address
-    I2C1ADB1 = (addr << 1);
-    
-    //Load Data Byte
-    I2C1TXB = data;
-    
-    //Set Data Length
-    I2C1CNTL = 1;
-    
-    //Send Start Condition
-    I2C1CON0bits.S = 1;
-    
-    //Wait for the module to become inactive
-    while (I2C1STAT0bits.MMA)
-    {
-        
-    }
-        
-    //Return Status
-    return (I2C1CNTL == 0);
+    return I2C_sendBytes(addr, &data, 1);
 }
 
 //Attempts to read 1 byte of DATA from a device at ADDR
@@ -144,6 +130,7 @@ bool I2C_registerWriteRead(uint8_t addr, uint8_t regAddr, uint8_t* readData, uin
     //Set Data Length
     I2C1CNTL = 1;
 
+    //Reset Status and Error
     I2C1STAT1 = 0x00;
     I2C1ERR = 0x00;
         
@@ -220,9 +207,17 @@ bool I2C_sendBytes(uint8_t addr, uint8_t* data, uint8_t len)
         {
             if (I2C1STAT1bits.TXBE)
             {
-                //Load next byte
-                I2C1TXB = data[index];
-                index++;
+                if (index >= len)
+                {
+                    //Somehow we got here... probably a junk byte
+                    I2C1TXB = 0x00;
+                }
+                else
+                {
+                    //Load next byte
+                    I2C1TXB = data[index];
+                    index++;
+                }
             }
         }
     }
