@@ -1,3 +1,23 @@
+/*
+© [2022] Microchip Technology Inc. and its subsidiaries.
+
+    Subject to your compliance with these terms, you may use Microchip 
+    software and any derivatives exclusively with Microchip products. 
+    You are responsible for complying with 3rd party license terms  
+    applicable to your use of 3rd party software (including open source  
+    software) that may accompany Microchip software. SOFTWARE IS ?AS IS.? 
+    NO WARRANTIES, WHETHER EXPRESS, IMPLIED OR STATUTORY, APPLY TO THIS 
+    SOFTWARE, INCLUDING ANY IMPLIED WARRANTIES OF NON-INFRINGEMENT,  
+    MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT 
+    WILL MICROCHIP BE LIABLE FOR ANY INDIRECT, SPECIAL, PUNITIVE, 
+    INCIDENTAL OR CONSEQUENTIAL LOSS, DAMAGE, COST OR EXPENSE OF ANY 
+    KIND WHATSOEVER RELATED TO THE SOFTWARE, HOWEVER CAUSED, EVEN IF 
+    MICROCHIP HAS BEEN ADVISED OF THE POSSIBILITY OR THE DAMAGES ARE 
+    FORESEEABLE. TO THE FULLEST EXTENT ALLOWED BY LAW, MICROCHIP?S 
+    TOTAL LIABILITY ON ALL CLAIMS RELATED TO THE SOFTWARE WILL NOT 
+    EXCEED AMOUNT OF FEES, IF ANY, YOU PAID DIRECTLY TO MICROCHIP FOR 
+    THIS SOFTWARE.
+*/
 
 // PIC18F56Q71 Configuration Bit Settings
 
@@ -66,6 +86,8 @@
 #include <xc.h>
 
 #include "i2c_client.h"
+#include "i2c_blockData.h"
+#include "interrupts.h"
 
 #define BUFFER_SIZE 16
 
@@ -74,7 +96,6 @@ static volatile uint8_t buffer[BUFFER_SIZE];
 //Example WRITE function (Host -> Client)
 void myI2CWriteFunction(uint8_t data)
 {
-    LATC7 = !LATC7;
     buffer[0] = data;
 }
 
@@ -87,7 +108,7 @@ uint8_t myI2CReadFunction(void)
 //Example STOP function
 void myI2CStopFunction(void)
 {
-    
+    //Add some code here
 }
 
 void main(void) {
@@ -109,21 +130,30 @@ void main(void) {
     LATC7 = 1;
     
     //Assign Interrupt Handlers
-    I2C_assignByteWriteHandler(&myI2CWriteFunction);
-    I2C_assignByteReadHandler(&myI2CReadFunction);
-    I2C_assignStopHandler(&myI2CStopFunction);
     
-    IVTBASE = 0x1000;
-    IVTLOCKbits.IVTLOCKED = 1;
+    //User Defined Functions
+//    I2C_assignByteWriteHandler(&myI2CWriteFunction);
+//    I2C_assignByteReadHandler(&myI2CReadFunction);
+//    I2C_assignStopHandler(&myI2CStopFunction);
+    
+    //Block Mode Driver Configuration
+    I2C_assignByteWriteHandler(&I2C_BlockData_StoreByte);
+    I2C_assignByteReadHandler(&I2C_BlockData_RequestByte);
+    I2C_assignStopHandler(&I2C_BlockData_onStop);
+    
+    I2C_BlockData_setupReadBuffer(&buffer[0], BUFFER_SIZE);
+    I2C_BlockData_setupWriteBuffer(&buffer[0], BUFFER_SIZE);
+    
+    //Configure Vector Interrupts
+    Interrupts_init();
     
     //Enable Interrupts
-    INTCON0bits.GIE = 1;
-    INTCON0bits.GIEL = 1;
-    INTCON0bits.GIEH = 1;
+    Interrupts_enable();
     
     while (1)
     {
-        //LATC7 = !LATC7;
+        //Blink the LED
+        LATC7 = !LATC7;
         
         //Simple delay
         for (uint32_t i = 0; i < 0xFFFFF; i++) { ; }

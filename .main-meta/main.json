@@ -4,8 +4,8 @@
     "content": {
         "metaDataVersion": "1.3.0",
         "name": "com.microchip.mcu8.mplabx.project.pic18f56q71-bare-metal-i2c-mplab",
-        "version": " ",
-        "displayName": "",
+        "version": "1.0.0",
+        "displayName": "Bare Metal I2C for the PIC18F56Q71 Family of MCUs",
         "projectName": "pic18f56q71-bare-metal-i2c-mplab",
         "shortDescription": "This example contains a simplified, lightweight I2C driver for the PIC18F56Q71 family.",
         "ide": {
@@ -19,12 +19,8 @@
             }
         ],
         "dfp": {
-            "name": "",
-            "semverRange": ""
-        },
-        "configurator": {
-            "name": "",
-            "semverRange": ""
+            "name": "PIC18F-Q_DFP",
+            "semverRange": "^1.14.237"
         },
         "device": {
             "metaDataVersion": "1.0.0",
@@ -37,8 +33,12 @@
             }
         },
         "author": "Robert Perkel",
-        "peripherals": [],
-        "keywords": [],
+        "peripherals": [
+            "I2C"
+        ],
+        "keywords": [
+            "I2C", "Bare Metal"
+        ],
         "additionalData": {
             "longDescription": {
                 "metaDataVersion": "1.0.0",

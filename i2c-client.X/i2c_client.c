@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 #include "i2c_client.h"
+#include "interrupts.h"
 
 static void (*rxCallback)(uint8_t) = 0;
 static uint8_t (*txCallback)(void) = 0;
@@ -108,7 +109,7 @@ void I2C_initPins(void)
 }
 
 //Write Interrupt
-void __interrupt(irq(I2C1TX), base(0x1000)) I2C_writeISR(void)
+void __interrupt(irq(I2C1TX), base(INTERRUPT_BASE)) I2C_writeISR(void)
 {    
     if (txCallback != 0)
     {
@@ -124,7 +125,7 @@ void __interrupt(irq(I2C1TX), base(0x1000)) I2C_writeISR(void)
 }
 
 //Read Interrupt
-void __interrupt(irq(I2C1RX), base(0x1000)) I2C_readISR(void)
+void __interrupt(irq(I2C1RX), base(INTERRUPT_BASE)) I2C_readISR(void)
 {
     volatile uint8_t rx = I2C1RXB;
     
@@ -138,8 +139,8 @@ void __interrupt(irq(I2C1RX), base(0x1000)) I2C_readISR(void)
     PIR7bits.I2C1RXIF = 0;
 }
 
-//Stop Interrupt Handler
-void __interrupt(irq(I2C1), base(0x1000)) I2C_stopISR(void)
+//General I2C Interrupt Handler
+void __interrupt(irq(I2C1), base(INTERRUPT_BASE)) I2C_stopISR(void)
 {
     if (I2C1PIRbits.PCIF)
     {
