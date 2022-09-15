@@ -6,6 +6,12 @@
 
 In this example, bare metal I<sup>2</sup>C drivers for the I2C peripheral on the PIC18F56Q71 family of MCUs will be created.
 
+## Related Examples
+
+- [Bare Metal I2C for the PIC16F15244 (MSSP)](https://github.com/microchip-pic-avr-examples/pic16f15244-bare-metal-i2c-mplab)
+- [Bare Metal TWI for AVR128DB48](https://github.com/microchip-pic-avr-examples/avr128db48-bare-metal-twi-mplab)
+- [Bare Metal TWI for ATtiny1627](https://github.com/microchip-pic-avr-examples/attiny1627-bare-metal-twi-mplab)
+
 ## Software Used
 
 - [MPLAB® X IDE v6.0.0 or newer](https://www.microchip.com/en-us/tools-resources/develop/mplab-x-ide?utm_source=GitHub&utm_medium=TextLink&utm_campaign=MCU8_MMTCha_pic18q71&utm_content=pic18f56q71-bare-metal-i2c-mplab)
