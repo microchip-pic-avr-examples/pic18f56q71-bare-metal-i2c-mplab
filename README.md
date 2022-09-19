@@ -103,7 +103,7 @@ If the client does not ACK (NACK), then the function returns false (and no data 
 
 ### Reading Data from Clients
 
-There are 3 functions that are designed to read data from the client.
+There are 4 functions that are designed to read data from the client.
 
 ```
 bool I2C_registerWriteRead(uint8_t addr, uint8_t regAddr, uint8_t* readData, uint8_t len);
