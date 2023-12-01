@@ -142,6 +142,9 @@ bool I2C_registerWriteRead(uint8_t addr, uint8_t regAddr, uint8_t* readData, uin
     
     uint8_t index = 0;
     
+    //Wait for Start!
+    while (I2C1CON0bits.S);
+    
     //While in host mode...
     while (I2C1STAT0bits.MMA)
     {
@@ -163,8 +166,11 @@ bool I2C_registerWriteRead(uint8_t addr, uint8_t regAddr, uint8_t* readData, uin
 
                 //Start Communication
                 I2C1CON0bits.S = 1;
+                
+                //Wait for Start!
+                while (I2C1CON0bits.S);
 
-                //Clear Restart
+                //Clear Restart Flag
                 I2C1CON0bits.RSEN = 0;
                 
             }
@@ -200,6 +206,9 @@ bool I2C_sendBytes(uint8_t addr, uint8_t* data, uint8_t len)
     I2C1CON0bits.S = 1;
     
     uint8_t index = 1;
+    
+    //Wait for Start!
+    while (I2C1CON0bits.S);
     
     while (I2C1STAT0bits.MMA)
     {
@@ -239,6 +248,9 @@ bool I2C_readBytes(uint8_t addr, uint8_t* data, uint8_t len)
     I2C1CON0bits.S = 1;
         
     uint8_t index = 0;
+    
+    //Wait for Start!
+    while (I2C1CON0bits.S);
     
     //While in host mode...
     while (I2C1STAT0bits.MMA)
